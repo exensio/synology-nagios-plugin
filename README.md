@@ -52,3 +52,6 @@ define service {
   check_command                  check_snmp_synology!public!45!48!85!90
 }
 ```
+
+## Based on
+This plugin has been originally published by [Nicolas Ordonez] (mailto:nicolas.ord@gmail.com) on [https://exchange.nagios.org] (https://exchange.nagios.org/directory/Plugins/Network-and-Systems-Management/Others/Synology-status/details)
