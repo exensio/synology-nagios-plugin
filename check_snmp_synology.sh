@@ -342,7 +342,7 @@ else
         RAIDStatus[$i]=$(echo "$syno" | grep $OID_RAIDStatus.$(($i-1)) | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
 
         storageName[$i]=$(echo "${RAIDName[$i]}" | sed -e 's/[[:blank:]]//g' | sed -e 's/\"//g' | sed 's/.*/\L&/')
-        storageID[$i]=$(echo "$syno_diskspace" | grep ${storageName[$i]} | cut -d "=" -f1 | rev | cut -d "." -f1 | rev)
+        storageID[$i]=$(echo "$syno_diskspace" | grep -E "= *${storageName[$i]} *$" | cut -d "=" -f1 | rev | cut -d "." -f1 | rev)
 
         if [ "${storageID[$i]}" != "" ] ; then
             storageSize[$i]=$(echo "$syno_diskspace" | grep "$OID_StorageSize.${storageID[$i]}" | cut -d "=" -f2 )
