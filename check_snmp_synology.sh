@@ -31,6 +31,7 @@
 #
 # 16.04.2015  Nicolas Ordonez, Switzerland
 # 05.10.2015  Roland Rickborn <roland.rickborn@exensio.de>, Germany
+# 29.02.2016  j-ed, https://github.com/j-ed
 #---------------------------------------------------
 # this plugin checks the health of your Synology NAS
 # - System status (Power, Fans)
@@ -43,11 +44,11 @@
 #
 # Tested with DSM 5.0, 5.1 & 5.2
 #---------------------------------------------------
-# Based on http://ukdl.synology.com/download/Document/MIBGuide/Synology_DiskStation_MIB_Guide.pdf 
+# Based on http://ukdl.synology.com/download/Document/MIBGuide/Synology_DiskStation_MIB_Guide.pdf
 #---------------------------------------------------
 # actual number disk limit = 52 disks per Synology
 #---------------------------------------------------
- 
+
 SNMPWALK=$(which snmpwalk)
 SNMPGET=$(which snmpget)
 
@@ -191,22 +192,22 @@ else
     if [ "$?" != "0" ] ; then
         echo "CRITICAL - Problem with SNMP request, check user/password/host"
         exit 2
-    fi 
+    fi
     nbDisk=$(echo "$tmpRequest" | grep $OID_diskID | wc -l)
     nbRAID=$(echo "$tmpRequest" | grep $OID_RAIDName | wc -l)
 
     for i in `seq 1 $nbDisk`;
     do
         if [ $i -lt 25 ] ; then
-        OID_disk="$OID_disk $OID_diskID.$(($i-1)) $OID_diskModel.$(($i-1)) $OID_diskStatus.$(($i-1)) $OID_diskTemp.$(($i-1)) " 
+        OID_disk="$OID_disk $OID_diskID.$(($i-1)) $OID_diskModel.$(($i-1)) $OID_diskStatus.$(($i-1)) $OID_diskTemp.$(($i-1)) "
         else
             OID_disk2="$OID_disk2 $OID_diskID.$(($i-1)) $OID_diskModel.$(($i-1)) $OID_diskStatus.$(($i-1)) $OID_diskTemp.$(($i-1)) "
-        fi   
+        fi
     done
 
     for i in `seq 1 $nbRAID`;
     do
-        OID_RAID="$OID_RAID $OID_RAIDName.$(($i-1)) $OID_RAIDStatus.$(($i-1))" 
+        OID_RAID="$OID_RAID $OID_RAIDName.$(($i-1)) $OID_RAIDStatus.$(($i-1))"
     done
 
     if [ "$ups" = "yes" ] && [ "$dsmcheck" = "yes" ]; then
@@ -307,7 +308,7 @@ else
         diskModel[$i]=$(echo "$syno" | grep "$OID_diskModel.$(($i-1)) " | cut -d "=" -f2 )
         diskStatus[$i]=$(echo "$syno" | grep "$OID_diskStatus.$(($i-1)) " | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
         diskTemp[$i]=$(echo "$syno" | grep "$OID_diskTemp.$(($i-1)) " | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
-        
+
         #Store perfData
         perfDataTempString="$perfDataTempString 'Temp Disk $i'=${diskTemp[$i]};$warningTemperature;$criticalTemperature;0" ;
 
@@ -331,7 +332,7 @@ else
             fi
         fi
 
-    done  
+    done
 
     syno_diskspace=`$SNMPWALK $SNMPArgs $hostname $OID_Storage 2> /dev/null`
 
@@ -342,7 +343,7 @@ else
         RAIDStatus[$i]=$(echo "$syno" | grep $OID_RAIDStatus.$(($i-1)) | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
 
         storageName[$i]=$(echo "${RAIDName[$i]}" | sed -e 's/[[:blank:]]//g' | sed -e 's/\"//g' | sed 's/.*/\L&/')
-        storageID[$i]=$(echo "$syno_diskspace" | grep ${storageName[$i]} | cut -d "=" -f1 | rev | cut -d "." -f1 | rev)
+        storageID[$i]=$(echo "$syno_diskspace" | grep -E "= *${storageName[$i]} *$" | cut -d "=" -f1 | rev | cut -d "." -f1 | rev)
 
         if [ "${storageID[$i]}" != "" ] ; then
             storageSize[$i]=$(echo "$syno_diskspace" | grep "$OID_StorageSize.${storageID[$i]}" | cut -d "=" -f2 )
@@ -350,7 +351,7 @@ else
             storageAllocationUnits[$i]=$(echo "$syno_diskspace" | grep "$OID_StorageAllocationUnits.${storageID[$i]}" | cut -d "=" -f2 )
             storagePercentUsed[$i]=$((${storageSizeUsed[$i]} * 100 / ${storageSize[$i]}))
             storagePercentUsedString[$i]="${storagePercentUsed[$i]}% used"
-            
+
             #Store perfData
             perfDataStorageString="$perfDataStorageString 'Raid $i Usage'=${storagePercentUsed[$i]};$warningStorage;$criticalStorage;0" ;
 
@@ -383,26 +384,26 @@ else
         esac
     done
 
-    if [ "$verbose" = "yes" ] ; then    
+    if [ "$verbose" = "yes" ] ; then
         echo "Synology model:        $model" ;
-        echo "Synology s/n:        $serialNumber" ;
-        echo "DSM Version:        $DSMVersion" ;
-        echo "DSM update:         $DSMUpgradeAvailable" ;
+        echo "Synology s/n:          $serialNumber" ;
+        echo "DSM Version:           $DSMVersion" ;
+        echo "DSM update:            $DSMUpgradeAvailable" ;
         echo "System Status:         $systemStatus" ;
-        echo "Temperature:         $temperature" ;
-        echo "Power Status:         $powerStatus" ;
+        echo "Temperature:           $temperature" ;
+        echo "Power Status:          $powerStatus" ;
         echo "System Fan Status:     $systemFanStatus" ;
-        echo "CPU Fan Status:         $CPUFanStatus" ;
-        echo "Number of disks:         $nbDisk" ;
+        echo "CPU Fan Status:        $CPUFanStatus" ;
+        echo "Number of disks:       $nbDisk" ;
         for i in `seq 1 $nbDisk`;
         do
             echo " ${diskID[$i]} (model:${diskModel[$i]}) status:${diskStatus[$i]} temperature:${diskTemp[$i]}" ;
-        done 
+        done
         echo "Number of RAID volume:   $nbRAID" ;
         for i in `seq 1 $nbRAID`;
         do
             echo " ${RAIDName[$i]} status:${RAIDStatus[$i]} ${storagePercentUsedString[$i]}" ;
-        done 
+        done
 
         # Display UPS information
             if [ "$ups" = "yes" ] ; then
