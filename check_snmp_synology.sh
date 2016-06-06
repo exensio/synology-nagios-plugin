@@ -6,7 +6,7 @@
 #
 # The MIT License (MIT)
 # 
-# Copyright (c) 2015, Roland Rickborn (roland.rickborn@exensio.de)
+# Copyright (c) 2016, Roland Rickborn (roland.rickborn@exensio.de)
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-# check_snmp_synology for nagios version 2.3
+# check_snmp_synology for nagios version 2.4
 # See https://exchange.nagios.org/directory/Plugins/Network-and-Systems-Management/Others/Synology-status/details
 #
 # 16.04.2015  Nicolas Ordonez, Switzerland
 # 05.10.2015  Roland Rickborn <roland.rickborn@exensio.de>, Germany
 # 29.02.2016  j-ed, https://github.com/j-ed
+# 10.05.2016  Luiz Henrique De Andrade, luizhandrade
 #---------------------------------------------------
 # this plugin checks the health of your Synology NAS
 # - System status (Power, Fans)
@@ -224,10 +225,10 @@ else
         syno2=`$SNMPGET $SNMPArgs $hostname $OID_disk2 2> /dev/null`
         syno=$(echo "$syno";echo "$syno2";)
     fi
-
-    model=$(echo "$syno" | grep $OID_model | cut -d "=" -f2)
-    serialNumber=$(echo "$syno" | grep $OID_serialNumber | cut -d "=" -f2)
-    DSMVersion=$(echo "$syno" | grep $OID_DSMVersion | cut -d "=" -f2)
+    
+    model=$(echo "$syno" | grep $OID_model | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+    serialNumber=$(echo "$syno" | grep $OID_serialNumber | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+    DSMVersion=$(echo "$syno" | grep $OID_DSMVersion | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
 
     healthString="Synology $model (s/n:$serialNumber, $DSMVersion)"
 
@@ -240,7 +241,7 @@ else
         "5")    DSMUpgradeAvailable="Others";    healthWarningStatus=1;     healthString="$healthString, Check DSM Update";;
     esac
 
-    RAIDName=$(echo "$syno" | grep $OID_RAIDName | cut -d "=" -f2)
+    RAIDName=$(echo "$syno" | grep $OID_RAIDName | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
     RAIDStatus=$(echo "$syno" | grep $OID_RAIDStatus | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
     systemStatus=$(echo "$syno" | grep $OID_systemStatus | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
     temperature=$(echo "$syno" | grep $OID_temperature | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
@@ -304,8 +305,8 @@ else
     #Check all disk status
     for i in `seq 1 $nbDisk`;
     do
-        diskID[$i]=$(echo "$syno" | grep "$OID_diskID.$(($i-1)) " | cut -d "=" -f2)
-        diskModel[$i]=$(echo "$syno" | grep "$OID_diskModel.$(($i-1)) " | cut -d "=" -f2 )
+        diskID[$i]=$(echo "$syno" | grep "$OID_diskID.$(($i-1)) " | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+        diskModel[$i]=$(echo "$syno" | grep "$OID_diskModel.$(($i-1)) " | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
         diskStatus[$i]=$(echo "$syno" | grep "$OID_diskStatus.$(($i-1)) " | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
         diskTemp[$i]=$(echo "$syno" | grep "$OID_diskTemp.$(($i-1)) " | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
 
@@ -411,19 +412,19 @@ else
 
         # Display UPS information
             if [ "$ups" = "yes" ] ; then
-                upsModel=$(echo "$syno" | grep $OID_UpsModel | cut -d "=" -f2)
-                upsSN=$(echo "$syno" | grep $OID_UpsSN | cut -d "=" -f2)
-                upsStatus=$(echo "$syno" | grep $OID_UpsStatus | cut -d "=" -f2)
-                upsLoad=$(echo "$syno" | grep $OID_UpsLoad | cut -d "=" -f2)
-                upsBatteryCharge=$(echo "$syno" | grep $OID_UpsBatteryCharge | cut -d "=" -f2)
-                upsBatteryChargeWarning=$(echo "$syno" | grep $OID_UpsBatteryChargeWarning | cut -d "=" -f2)
+                upsModel=$(echo "$syno" | grep $OID_UpsModel | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+                upsSN=$(echo "$syno" | grep $OID_UpsSN | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+                upsStatus=$(echo "$syno" | grep $OID_UpsStatus | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+                upsLoad=$(echo "$syno" | grep $OID_UpsLoad | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+                upsBatteryCharge=$(echo "$syno" | grep $OID_UpsBatteryCharge | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+                upsBatteryChargeWarning=$(echo "$syno" | grep $OID_UpsBatteryChargeWarning | cut -d "=" -f2 | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
 
             echo "UPS:"
             echo "  Model:        $upsModel"
-            echo "  s/n:            $upsSN"
-            echo "  Status:        $upsStatus"
-            echo "  Load:            $upsLoad"
-            echo "  Battery charge:    $upsBatteryCharge"
+            echo "  s/n:          $upsSN"
+            echo "  Status:       $upsStatus"
+            echo "  Load:                  $upsLoad"
+            echo "  Battery charge:        $upsBatteryCharge"
             echo "  Battery charge warning:$upsBatteryChargeWarning"
         fi
 
