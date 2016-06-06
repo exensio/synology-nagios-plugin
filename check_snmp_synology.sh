@@ -188,13 +188,13 @@ else
             exit 1
         fi
     fi
-    tmpRequest=`$SNMPWALK $SNMPArgs $hostname $OID_syno 2> /dev/null`
+    tmpRequest=`$SNMPWALK $SNMPArgs $hostname $OID_model 2> /dev/null`
     if [ "$?" != "0" ] ; then
         echo "CRITICAL - Problem with SNMP request, check user/password/host"
         exit 2
     fi
-    nbDisk=$(echo "$tmpRequest" | grep $OID_diskID | wc -l)
-    nbRAID=$(echo "$tmpRequest" | grep $OID_RAIDName | wc -l)
+    nbDisk=`$SNMPWALK $SNMPArgs $hostname $OID_diskID | wc -l`
+    nbRAID=`$SNMPWALK $SNMPArgs $hostname $OID_RAIDName | wc -l`
 
     for i in `seq 1 $nbDisk`;
     do
@@ -334,8 +334,6 @@ else
 
     done
 
-    syno_diskspace=`$SNMPWALK $SNMPArgs $hostname $OID_Storage 2> /dev/null`
-
     #Check all RAID volume status
     for i in `seq 1 $nbRAID`;
     do
@@ -343,12 +341,18 @@ else
         RAIDStatus[$i]=$(echo "$syno" | grep $OID_RAIDStatus.$(($i-1)) | cut -d "=" -f2 | sed 's/^[ \t]*//;s/[ \t]*$//')
 
         storageName[$i]=$(echo "${RAIDName[$i]}" | sed -e 's/[[:blank:]]//g' | sed -e 's/\"//g' | sed 's/.*/\L&/')
-        storageID[$i]=$(echo "$syno_diskspace" | grep -E "= *${storageName[$i]} *$" | cut -d "=" -f1 | rev | cut -d "." -f1 | rev)
+
+		syno_diskDescr=`$SNMPWALK $SNMPArgs $hostname $OID_Storage.3 2> /dev/null`
+
+		storageID[$i]=$(echo "$syno_diskDescr" | grep -Eo ".[0-9]* = \"\/${storageName[$i]}\" *" | cut -d "." -f2 | cut -d " " -f1)
 
         if [ "${storageID[$i]}" != "" ] ; then
-            storageSize[$i]=$(echo "$syno_diskspace" | grep "$OID_StorageSize.${storageID[$i]}" | cut -d "=" -f2 )
-            storageSizeUsed[$i]=$(echo "$syno_diskspace" | grep "$OID_StorageSizeUsed.${storageID[$i]}" | cut -d "=" -f2 )
-            storageAllocationUnits[$i]=$(echo "$syno_diskspace" | grep "$OID_StorageAllocationUnits.${storageID[$i]}" | cut -d "=" -f2 )
+		    storageSize[$i]=`$SNMPGET $SNMPArgs $hostname $OID_StorageSize.${storageID[$i]} | cut -d "=" -f2`
+
+		    storageSizeUsed[$i]=`$SNMPGET $SNMPArgs $hostname $OID_StorageSizeUsed.${storageID[$i]} | cut -d "=" -f2`
+
+	  	    storageAllocationUnits[$i]=`$SNMPGET $SNMPArgs $hostname $OID_StorageAllocationUnits.${storageID[$i]} | cut -d "=" -f2`
+
             storagePercentUsed[$i]=$((${storageSizeUsed[$i]} * 100 / ${storageSize[$i]}))
             storagePercentUsedString[$i]="${storagePercentUsed[$i]}% used"
 
