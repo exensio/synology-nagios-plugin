@@ -206,10 +206,12 @@ else
         fi
     done
 
-    for i in `seq 1 $nbRAID`;
-    do
-        OID_RAID="$OID_RAID $OID_RAIDName.$(($i-1)) $OID_RAIDStatus.$(($i-1))"
-    done
+    if [ $nbRAID -gt 0 ]; then
+        for i in `seq 1 $nbRAID`;
+	do
+	    OID_RAID="$OID_RAID $OID_RAIDName.$(($i-1)) $OID_RAIDStatus.$(($i-1))"
+	done
+    fi
 
     if [ "$ups" = "yes" ] && [ "$dsmcheck" = "yes" ]; then
         syno=`$SNMPGET $SNMPArgs $hostname $OID_model $OID_serialNumber $OID_DSMVersion $OID_systemStatus $OID_temperature $OID_powerStatus $OID_systemFanStatus $OID_CPUFanStatus $OID_disk $OID_RAID $OID_DSMUpgradeAvailable $OID_UpsModel $OID_UpsSN $OID_UpsStatus $OID_UpsLoad $OID_UpsBatteryCharge $OID_UpsBatteryChargeWarning 2> /dev/null`
