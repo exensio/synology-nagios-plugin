@@ -9,6 +9,10 @@ It checks the following items:
 * Storage usage
 * UPS informations
 
+## [exensio GmbH Blog](https://www.exensio.de/news-medien)
+
+This repositroy is created for the blogpost: [Synology DiskStation per SNMP überwachen](https://www.exensio.de/news-medien/newsreader-blog/synology-diskstation-per-snmp-ueberwachen)
+
 ## Requirements
 The SNMP agent on the NAS has to be activated.
 
